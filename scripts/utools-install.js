@@ -18,19 +18,25 @@ function execGit(args, cwd) {
   })
 }
 
-function resolveRepoUrl() {
-  const pkgPath = path.join(__dirname, '..', 'package.json')
-  let repoUrl = process.env.AUTOMATION_LIB_REPO || ''
-  if (!repoUrl && fs.existsSync(pkgPath)) {
-    try {
-      const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'))
-      repoUrl = pkg.repository && pkg.repository.url
-    } catch (_) {
-      // ignore
-    }
+function readRepoUrlFromGitConfig(libDir) {
+  const configPath = path.join(libDir, '.git', 'config')
+  if (!fs.existsSync(configPath)) return ''
+  try {
+    const content = fs.readFileSync(configPath, 'utf8')
+    const remoteBlock = content.split(/\n\[remote \"origin\"\]\n/)[1]
+    if (!remoteBlock) return ''
+    const urlLine = remoteBlock.split('\n').find((line) => line.trim().startsWith('url ='))
+    if (!urlLine) return ''
+    return urlLine.split('url =')[1].trim()
+  } catch (_) {
+    return ''
   }
+}
+
+function resolveRepoUrl(libDir) {
+  const repoUrl = process.env.AUTOMATION_LIB_REPO || readRepoUrlFromGitConfig(libDir)
   if (!repoUrl) {
-    throw new Error('未配置仓库地址：请设置 AUTOMATION_LIB_REPO 或 package.json#repository.url')
+    throw new Error('未配置仓库地址：请设置 AUTOMATION_LIB_REPO')
   }
   return repoUrl
 }
@@ -46,8 +52,8 @@ function ensureGitAvailable() {
 function installOrUpdate() {
   ensureGitAvailable()
 
-  const repoUrl = resolveRepoUrl()
   const libDir = path.join(utools.getPath('userData'), 'automation-lib')
+  const repoUrl = resolveRepoUrl(libDir)
 
   if (!fs.existsSync(libDir)) {
     notify('automation-lib：开始克隆...')

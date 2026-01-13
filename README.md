@@ -17,7 +17,7 @@ lib.notify('hello')
 
 > 前提：本机已安装 Git，且能访问仓库。
 
-将下面脚本粘贴到 uTools 自动化脚本中执行（首次安装或更新都可用）：
+将下面脚本粘贴到 uTools 自动化脚本中执行（首次安装或更新都可用）。首次安装需要设置 `AUTOMATION_LIB_REPO`，更新时会使用已存在的 `origin`：
 
 ```js
 const fs = require('fs')
