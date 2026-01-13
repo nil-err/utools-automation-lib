@@ -17,14 +17,17 @@ lib.notify('hello')
 
 > 前提：本机已安装 Git，且能访问仓库。
 
-将下面脚本粘贴到 uTools 自动化脚本中执行（首次安装或更新都可用）。首次安装需要设置 `AUTOMATION_LIB_REPO`，更新时会使用已存在的 `origin`：
+将下面脚本粘贴到 uTools 自动化脚本中执行（首次安装或更新都可用）。首次安装可通过 `ENTER.payload` 传入仓库地址（或设置 `AUTOMATION_LIB_REPO`），更新时会使用已存在的 `origin`：
 
 ```js
 const fs = require('fs')
 const path = require('path')
 const cp = require('child_process')
 
-const repoUrl = process.env.AUTOMATION_LIB_REPO || 'https://github.com/your-org/utools-automation-lib.git'
+const repoUrl =
+  process.env.AUTOMATION_LIB_REPO ||
+  readRepoUrlFromEnterPayload() ||
+  'https://github.com/your-org/utools-automation-lib.git'
 const libDir = path.join(utools.getPath('userData'), 'automation-lib')
 
 function notify(msg) {
@@ -33,6 +36,19 @@ function notify(msg) {
 
 function execGit(args, cwd) {
   return cp.execFileSync('git', args, { cwd, stdio: 'pipe', encoding: 'utf8' })
+}
+
+function readRepoUrlFromEnterPayload() {
+  try {
+    if (typeof ENTER === 'undefined' || !ENTER || !ENTER.payload) return ''
+    if (typeof ENTER.payload === 'string') return ENTER.payload.trim()
+    if (ENTER.payload.repoUrl && typeof ENTER.payload.repoUrl === 'string') {
+      return ENTER.payload.repoUrl.trim()
+    }
+    return ''
+  } catch (_) {
+    return ''
+  }
 }
 
 function isGitRepo(dir) {

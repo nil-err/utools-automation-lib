@@ -33,10 +33,26 @@ function readRepoUrlFromGitConfig(libDir) {
   }
 }
 
+function readRepoUrlFromEnterPayload() {
+  try {
+    if (typeof ENTER === 'undefined' || !ENTER || !ENTER.payload) return ''
+    if (typeof ENTER.payload === 'string') return ENTER.payload.trim()
+    if (ENTER.payload.repoUrl && typeof ENTER.payload.repoUrl === 'string') {
+      return ENTER.payload.repoUrl.trim()
+    }
+    return ''
+  } catch (_) {
+    return ''
+  }
+}
+
 function resolveRepoUrl(libDir) {
-  const repoUrl = process.env.AUTOMATION_LIB_REPO || readRepoUrlFromGitConfig(libDir)
+  const repoUrl =
+    process.env.AUTOMATION_LIB_REPO ||
+    readRepoUrlFromEnterPayload() ||
+    readRepoUrlFromGitConfig(libDir)
   if (!repoUrl) {
-    throw new Error('未配置仓库地址：请设置 AUTOMATION_LIB_REPO')
+    throw new Error('未配置仓库地址：请设置 AUTOMATION_LIB_REPO 或通过 ENTER.payload 传入')
   }
   return repoUrl
 }
