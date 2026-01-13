@@ -1,0 +1,10 @@
+{
+  "name": "utools-automation-lib",
+  "version": "2.0.0",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-org/utools-automation-lib.git"
+  },
+  "license": "MIT"
+}
