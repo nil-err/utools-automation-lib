@@ -49,6 +49,24 @@ function ensureGitAvailable() {
   }
 }
 
+function isGitRepo(libDir) {
+  try {
+    if (!fs.existsSync(path.join(libDir, '.git'))) return false
+    execGit(['-C', libDir, 'rev-parse', '--is-inside-work-tree'])
+    return true
+  } catch (_) {
+    return false
+  }
+}
+
+function moveToBackup(libDir) {
+  const parentDir = path.dirname(libDir)
+  const baseName = path.basename(libDir)
+  const backupDir = path.join(parentDir, `${baseName}.bak-${Date.now()}`)
+  fs.renameSync(libDir, backupDir)
+  return backupDir
+}
+
 function installOrUpdate() {
   ensureGitAvailable()
 
@@ -56,6 +74,15 @@ function installOrUpdate() {
   const repoUrl = resolveRepoUrl(libDir)
 
   if (!fs.existsSync(libDir)) {
+    notify('automation-lib：开始克隆...')
+    execGit(['clone', repoUrl, libDir])
+    notify('automation-lib：克隆完成')
+    return
+  }
+
+  if (!isGitRepo(libDir)) {
+    const backupDir = moveToBackup(libDir)
+    notify(`automation-lib：检测到非 Git 目录，已备份到 ${backupDir}`)
     notify('automation-lib：开始克隆...')
     execGit(['clone', repoUrl, libDir])
     notify('automation-lib：克隆完成')
