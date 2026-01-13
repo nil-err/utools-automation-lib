@@ -35,6 +35,24 @@ function execGit(args, cwd) {
   return cp.execFileSync('git', args, { cwd, stdio: 'pipe', encoding: 'utf8' })
 }
 
+function isGitRepo(dir) {
+  try {
+    if (!fs.existsSync(path.join(dir, '.git'))) return false
+    execGit(['-C', dir, 'rev-parse', '--is-inside-work-tree'])
+    return true
+  } catch (_) {
+    return false
+  }
+}
+
+function moveToBackup(dir) {
+  const parentDir = path.dirname(dir)
+  const baseName = path.basename(dir)
+  const backupDir = path.join(parentDir, `${baseName}.bak-${Date.now()}`)
+  fs.renameSync(dir, backupDir)
+  return backupDir
+}
+
 try {
   execGit(['--version'])
   if (!fs.existsSync(libDir)) {
@@ -42,6 +60,14 @@ try {
     execGit(['clone', repoUrl, libDir])
     notify('automation-lib：克隆完成')
   } else {
+    if (!isGitRepo(libDir)) {
+      const backupDir = moveToBackup(libDir)
+      notify(`automation-lib：检测到非 Git 目录，已备份到 ${backupDir}`)
+      notify('automation-lib：开始克隆...')
+      execGit(['clone', repoUrl, libDir])
+      notify('automation-lib：克隆完成')
+      return
+    }
     notify('automation-lib：开始更新...')
     execGit(['-C', libDir, 'fetch', '--all', '--prune'])
     execGit(['-C', libDir, 'pull', '--ff-only'])
