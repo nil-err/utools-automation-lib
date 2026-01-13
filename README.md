@@ -17,14 +17,17 @@ lib.notify('hello')
 
 > 前提：本机已安装 Git，且能访问仓库。
 
-将下面脚本粘贴到 uTools 自动化脚本中执行（首次安装或更新都可用）。首次安装需要设置 `AUTOMATION_LIB_REPO`，更新时会使用已存在的 `origin`：
+将下面脚本粘贴到 uTools 自动化脚本中执行（首次安装或更新都可用）。首次安装可通过 `ENTER.payload` 传入仓库地址（或设置 `AUTOMATION_LIB_REPO`），更新时会使用已存在的 `origin`：
 
 ```js
 const fs = require('fs')
 const path = require('path')
 const cp = require('child_process')
 
-const repoUrl = process.env.AUTOMATION_LIB_REPO || 'https://github.com/your-org/utools-automation-lib.git'
+const repoUrl =
+  process.env.AUTOMATION_LIB_REPO ||
+  readRepoUrlFromEnterPayload() ||
+  'https://github.com/your-org/utools-automation-lib.git'
 const libDir = path.join(utools.getPath('userData'), 'automation-lib')
 
 function notify(msg) {
@@ -35,6 +38,37 @@ function execGit(args, cwd) {
   return cp.execFileSync('git', args, { cwd, stdio: 'pipe', encoding: 'utf8' })
 }
 
+function readRepoUrlFromEnterPayload() {
+  try {
+    if (typeof ENTER === 'undefined' || !ENTER || !ENTER.payload) return ''
+    if (typeof ENTER.payload === 'string') return ENTER.payload.trim()
+    if (ENTER.payload.repoUrl && typeof ENTER.payload.repoUrl === 'string') {
+      return ENTER.payload.repoUrl.trim()
+    }
+    return ''
+  } catch (_) {
+    return ''
+  }
+}
+
+function isGitRepo(dir) {
+  try {
+    if (!fs.existsSync(path.join(dir, '.git'))) return false
+    execGit(['-C', dir, 'rev-parse', '--is-inside-work-tree'])
+    return true
+  } catch (_) {
+    return false
+  }
+}
+
+function moveToBackup(dir) {
+  const parentDir = path.dirname(dir)
+  const baseName = path.basename(dir)
+  const backupDir = path.join(parentDir, `${baseName}.bak-${Date.now()}`)
+  fs.renameSync(dir, backupDir)
+  return backupDir
+}
+
 try {
   execGit(['--version'])
   if (!fs.existsSync(libDir)) {
@@ -42,6 +76,14 @@ try {
     execGit(['clone', repoUrl, libDir])
     notify('automation-lib：克隆完成')
   } else {
+    if (!isGitRepo(libDir)) {
+      const backupDir = moveToBackup(libDir)
+      notify(`automation-lib：检测到非 Git 目录，已备份到 ${backupDir}`)
+      notify('automation-lib：开始克隆...')
+      execGit(['clone', repoUrl, libDir])
+      notify('automation-lib：克隆完成')
+      return
+    }
     notify('automation-lib：开始更新...')
     execGit(['-C', libDir, 'fetch', '--all', '--prune'])
     execGit(['-C', libDir, 'pull', '--ff-only'])

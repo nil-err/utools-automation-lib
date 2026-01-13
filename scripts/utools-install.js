@@ -33,10 +33,26 @@ function readRepoUrlFromGitConfig(libDir) {
   }
 }
 
+function readRepoUrlFromEnterPayload() {
+  try {
+    if (typeof ENTER === 'undefined' || !ENTER || !ENTER.payload) return ''
+    if (typeof ENTER.payload === 'string') return ENTER.payload.trim()
+    if (ENTER.payload.repoUrl && typeof ENTER.payload.repoUrl === 'string') {
+      return ENTER.payload.repoUrl.trim()
+    }
+    return ''
+  } catch (_) {
+    return ''
+  }
+}
+
 function resolveRepoUrl(libDir) {
-  const repoUrl = process.env.AUTOMATION_LIB_REPO || readRepoUrlFromGitConfig(libDir)
+  const repoUrl =
+    process.env.AUTOMATION_LIB_REPO ||
+    readRepoUrlFromEnterPayload() ||
+    readRepoUrlFromGitConfig(libDir)
   if (!repoUrl) {
-    throw new Error('未配置仓库地址：请设置 AUTOMATION_LIB_REPO')
+    throw new Error('未配置仓库地址：请设置 AUTOMATION_LIB_REPO 或通过 ENTER.payload 传入')
   }
   return repoUrl
 }
@@ -49,6 +65,24 @@ function ensureGitAvailable() {
   }
 }
 
+function isGitRepo(libDir) {
+  try {
+    if (!fs.existsSync(path.join(libDir, '.git'))) return false
+    execGit(['-C', libDir, 'rev-parse', '--is-inside-work-tree'])
+    return true
+  } catch (_) {
+    return false
+  }
+}
+
+function moveToBackup(libDir) {
+  const parentDir = path.dirname(libDir)
+  const baseName = path.basename(libDir)
+  const backupDir = path.join(parentDir, `${baseName}.bak-${Date.now()}`)
+  fs.renameSync(libDir, backupDir)
+  return backupDir
+}
+
 function installOrUpdate() {
   ensureGitAvailable()
 
@@ -56,6 +90,15 @@ function installOrUpdate() {
   const repoUrl = resolveRepoUrl(libDir)
 
   if (!fs.existsSync(libDir)) {
+    notify('automation-lib：开始克隆...')
+    execGit(['clone', repoUrl, libDir])
+    notify('automation-lib：克隆完成')
+    return
+  }
+
+  if (!isGitRepo(libDir)) {
+    const backupDir = moveToBackup(libDir)
+    notify(`automation-lib：检测到非 Git 目录，已备份到 ${backupDir}`)
     notify('automation-lib：开始克隆...')
     execGit(['clone', repoUrl, libDir])
     notify('automation-lib：克隆完成')
