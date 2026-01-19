@@ -13,17 +13,19 @@ function buildAicolateTraceUrl(logids, opts = {}) {
     baseUrl =
       'https://aicolate.tiktok-row.net/loop/console/enterprise/personal/space/7540597634176696321/observation/traces',
     platform = 'cozeloop',
-    presetRange = 'unset',
+    // presetRange = 'unset',
+    presetRange = '3d',
     selectedSpanType = 'root_span',
     relation = 'and',
-    rangeMs = 24 * 60 * 60 * 1000,
-    nowAfter = 30 * 60 * 1000,
-    now = Date.now(),
+    // rangeMs = 24 * 60 * 60 * 1000,
+    // nowAfter = 30 * 60 * 1000,
+    // now = Date.now(),
   } = opts
 
+  
   const ids = Array.isArray(logids) ? logids.map(String) : [String(logids)]
-  const end = now + nowAfter
-  const start = end - rangeMs
+  // const end = now + nowAfter
+  // const start = end - rangeMs
 
   const filtersObj = {
     query_and_or: 'and',
@@ -44,8 +46,8 @@ function buildAicolateTraceUrl(logids, opts = {}) {
   u.searchParams.set('selected_span_type', selectedSpanType)
   u.searchParams.set('trace_platform', platform)
   u.searchParams.set('trace_preset_time_range', presetRange)
-  u.searchParams.set('trace_start_time', String(start))
-  u.searchParams.set('trace_end_time', String(end))
+  // u.searchParams.set('trace_start_time', String(start))
+  // u.searchParams.set('trace_end_time', String(end))
   u.searchParams.set('trace_filters', traceFiltersParam)
 
   return u.toString()
