@@ -2,6 +2,8 @@ const fs = require('fs')
 const path = require('path')
 const cp = require('child_process')
 
+const DEFAULT_REPO_URL = 'https://github.com/nil-err/utools-automation-lib.git'
+
 function notify(msg) {
   try {
     utools.showNotification(String(msg))
@@ -47,14 +49,12 @@ function readRepoUrlFromEnterPayload() {
 }
 
 function resolveRepoUrl(libDir) {
-  const repoUrl =
+  return (
     process.env.AUTOMATION_LIB_REPO ||
     readRepoUrlFromEnterPayload() ||
-    readRepoUrlFromGitConfig(libDir)
-  if (!repoUrl) {
-    throw new Error('未配置仓库地址：请设置 AUTOMATION_LIB_REPO 或通过 ENTER.payload 传入')
-  }
-  return repoUrl
+    readRepoUrlFromGitConfig(libDir) ||
+    DEFAULT_REPO_URL
+  )
 }
 
 function ensureGitAvailable() {

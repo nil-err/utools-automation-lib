@@ -1,10 +1,30 @@
 {
   "name": "utools-automation-lib",
   "version": "2.0.0",
+  "description": "Shared helpers for uTools automation scripts.",
   "main": "index.js",
+  "files": [
+    "index.js",
+    "src",
+    "scripts",
+    "README.md"
+  ],
+  "scripts": {
+    "test": "node -e \"const lib=require('./'); ['buildChromeArgs','openUrl','buildAicolateTraceUrl','isHexId','parseHexIds','notify','copyText','debugCopy','version'].forEach((key)=>{ if (!(key in lib)) throw new Error('Missing export: '+key) }); console.log('ok')\""
+  },
+  "keywords": [
+    "utools",
+    "automation",
+    "chrome",
+    "aicolate"
+  ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/your-org/utools-automation-lib.git"
+    "url": "git+https://github.com/nil-err/utools-automation-lib.git"
   },
+  "bugs": {
+    "url": "https://github.com/nil-err/utools-automation-lib/issues"
+  },
+  "homepage": "https://github.com/nil-err/utools-automation-lib#readme",
   "license": "MIT"
 }
