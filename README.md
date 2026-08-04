@@ -122,6 +122,16 @@ try {
 
 > 若希望使用仓库内置脚本，也可在 clone 后执行 `scripts/utools-install.js`。内置脚本与上面的逻辑保持一致。
 
+## MCP 配置
+
+本仓库提供 Cursor 项目级 MCP 示例配置：
+
+```text
+.cursor/mcp.example.json
+```
+
+复制为 `.cursor/mcp.json` 后填入本机的 `x-mcp-key`。`.cursor/mcp.json` 已加入 `.gitignore`，用于保存本地密钥，不应提交到仓库。
+
 ## 导出能力
 
 - Chrome / 浏览器：`getChromePath`、`buildChromeArgs`、`openUrl`
